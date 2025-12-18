@@ -14,6 +14,7 @@ import android.os.Looper
 import android.util.Log
 import android.view.animation.LinearInterpolator
 import androidx.appcompat.app.AlertDialog
+import kotlinx.coroutines.processNextEventInCurrentThread
 import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
@@ -211,5 +212,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         soundPool.release()
+
     }
+
 }
