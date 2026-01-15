@@ -8,6 +8,9 @@ import android.widget.CheckBox
 import android.widget.EditText
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
 
 class LoginActivity : AppCompatActivity() {
     lateinit var manejadorArchivo: FileHandler
@@ -17,6 +20,8 @@ class LoginActivity : AppCompatActivity() {
     lateinit var buttonNewUser:Button
     lateinit var checkBoxRecordarme: CheckBox
     lateinit var mediaPlayer: MediaPlayer
+    private lateinit var auth: FirebaseAuth;
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -27,6 +32,7 @@ class LoginActivity : AppCompatActivity() {
             insets
         }*/
         //Inicialización de variables
+        auth = Firebase.auth // Firebase
         manejadorArchivo = SharedPreferencesManager(this)
         editTextEmail = findViewById(R.id.editTextEmail)
         editTextPassword = findViewById(R.id.editTextPassword)
@@ -55,6 +61,12 @@ class LoginActivity : AppCompatActivity() {
         }
         mediaPlayer=MediaPlayer.create(this, R.raw.title_screen)
         mediaPlayer.start()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val currentUser = auth.currentUser
+        //updateUI(currentUser)
     }
     private fun LeerDatosDePreferencias(){
         val listadoLeido = manejadorArchivo.ReadInformation()
