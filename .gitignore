@@ -8,3 +8,5 @@
 .cxx
 local.properties
 .idea
+/app/google-services.json
+/.kotlin/errors/errors-1767901528552.log
