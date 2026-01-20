@@ -1,12 +1,17 @@
 package com.mora.ariel.cazarpatos
 
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.firestore
 
 class RankingActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,8 +36,36 @@ class RankingActivity : AppCompatActivity() {
         recyclerViewRanking.adapter = RankingAdapter(jugadores);
         recyclerViewRanking.setHasFixedSize(true);
             */
-        OperacionesSqLite()
+        //OperacionesSqLite()
+        consultarPuntajeJugadores()
     }
+    fun consultarPuntajeJugadores() {
+        val db = Firebase.firestore
+        db.collection("ranking")
+            .orderBy("huntedDucks", Query.Direction.DESCENDING)
+            .limit(5)
+            .get()
+            .addOnSuccessListener { result ->
+                Log.d(EXTRA_LOGIN, "Success getting documents")
+                var jugadores = ArrayList<Player>()
+                for (document in result) {
+                    val jugador = document.toObject(Player::class.java)
+                    //val jugador = document.toObject<Player>()
+                    jugadores.add(jugador)
+                }
+                //Poblar en RecyclerView información usando mi adaptador
+                val recyclerViewRanking: RecyclerView = findViewById(R.id.recyclerViewRanking);
+                recyclerViewRanking.layoutManager = LinearLayoutManager(this);
+                recyclerViewRanking.adapter = RankingAdapter(jugadores);
+                recyclerViewRanking.setHasFixedSize(true);
+            }
+            .addOnFailureListener { exception ->
+                Log.w(EXTRA_LOGIN, "Error getting documents.", exception)
+                Toast.makeText(this, "Error al obtener datos de jugadores", Toast.LENGTH_LONG)
+                    .show()
+            }
+    }
+
     fun OperacionesSqLite(){
         RankingPlayerDBHelper(this).deleteAllRanking()
         RankingPlayerDBHelper(this).insertRankingByQuery(Player("Jugador9",10))
@@ -62,6 +95,65 @@ class RankingActivity : AppCompatActivity() {
         recyclerViewRanking.layoutManager = LinearLayoutManager(this)
         recyclerViewRanking.adapter = RankingAdapter(jugadoresSQLite)
         recyclerViewRanking.setHasFixedSize(true)
+    }
+    fun procesarPuntajePatosCazados(nombreJugador:String, patosCazados:Int){
+        val jugador = Player(nombreJugador,patosCazados)
+        //Trata de obtener id del documento del ranking específico,
+        // si lo obtiene lo actualiza, caso contrario lo crea
+        val db = Firebase.firestore
+        db.collection("ranking")
+            .whereEqualTo("username", jugador.username)
+            .get()
+            .addOnSuccessListener { documents ->
+                if(documents!= null &&
+                    documents.documents != null &&
+                    documents.documents.count()>0
+                ){
+                    val idDocumento = documents.documents.get(0).id
+                    val jugadorLeido = documents.documents.get(0).toObject(Player::class.java)
+                    if(jugadorLeido!!.huntedDucks < patosCazados )
+                    {
+                        Log.w(EXTRA_LOGIN, "Puntaje actual mayor, por lo tanto actualizado")
+                        actualizarPuntajeJugador(idDocumento, jugador)
+                    }
+                    else{
+                        Log.w(EXTRA_LOGIN, "No se actualizo puntaje, por ser menor al actual")
+                    }
+                }
+                else{
+                    ingresarPuntajeJugador(jugador)
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.w(EXTRA_LOGIN, "Error getting documents", exception)
+                Toast.makeText(this, "Error al obtener datos de jugador", Toast.LENGTH_LONG).show()
+            }
+    }
+    fun ingresarPuntajeJugador(jugador:Player){
+        val db = Firebase.firestore
+        db.collection("ranking")
+            .add(jugador)
+            .addOnSuccessListener { documentReference ->
+                Toast.makeText(this,"Puntaje usuario ingresado exitosamente", Toast.LENGTH_LONG).show()
+            }
+            .addOnFailureListener { exception ->
+                Log.w(EXTRA_LOGIN, "Error adding document", exception)
+                Toast.makeText(this,"Error al ingresar el puntaje", Toast.LENGTH_LONG).show()
+            }
+    }
+    fun actualizarPuntajeJugador(idDocumento:String, jugador:Player){
+        val db = Firebase.firestore
+        db.collection("ranking")
+            .document(idDocumento)
+            //.update(contactoHashMap)
+            .set(jugador) //otra forma de actualizar
+            .addOnSuccessListener {
+                Toast.makeText(this,"Puntaje de usuario actualizado exitosamente", Toast.LENGTH_LONG).show()
+            }
+            .addOnFailureListener { exception ->
+                Log.w(EXTRA_LOGIN, "Error updating document", exception)
+                Toast.makeText(this,"Error al actualizar el puntaje" , Toast.LENGTH_LONG).show()
+            }
     }
 
 }
