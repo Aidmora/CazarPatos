@@ -318,6 +318,20 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this,"Error al actualizar el puntaje" , Toast.LENGTH_LONG).show()
             }
     }
+    fun eliminarPuntajeJugador(idDocumentoSeleccionado:String){
+        val db = Firebase.firestore
+        db.collection("ranking")
+            .document(idDocumentoSeleccionado)
+            .delete()
+            .addOnSuccessListener {
+                Toast.makeText(this,"Puntaje de usuario eliminado exitosamente", Toast.LENGTH_LONG).show()
+            }
+            .addOnFailureListener { exception ->
+                Log.w(EXTRA_LOGIN, "Error deleting document", exception)
+                Toast.makeText(this,"Error al eliminar el puntaje" , Toast.LENGTH_LONG).show()
+            }
+    }
+
 
 
 
